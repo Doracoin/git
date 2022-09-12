@@ -159,7 +159,7 @@ test_expect_success 'git hook run a hook with a bad shebang' '
 	# TODO: We should emit the same (or at least a more similar)
 	# error on Windows and !Windows. See the OS-specific code in
 	# start_command()
-	if test_have_prereq !WINDOWS
+	if test_have_prereq !MINGW
 	then
 		cat >expect <<-\EOF
 		fatal: cannot run bad-hooks/test-hook: ...
