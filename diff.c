@@ -2592,7 +2592,7 @@ void print_stat_summary(FILE *fp, int files,
 static void show_stats(struct diffstat_t *data, struct diff_options *options)
 {
 	int i, len, add, del, adds = 0, dels = 0;
-	uintmax_t max_change = 0, max_len = 0;
+	uintmax_t max_change = 0, max_width = 0;
 	int total_files = data->nr, count;
 	int width, name_width, graph_width, number_width = 0, bin_width = 0;
 	const char *reset, *add_c, *del_c;
@@ -2621,9 +2621,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		fill_print_name(file);
-		len = strlen(file->print_name);
-		if (max_len < len)
-			max_len = len;
+		len = utf8_strwidth(file->print_name);
+		if (max_width < len)
+			max_width = len;
 
 		if (file->is_unmerged) {
 			/* "Unmerged" is 8 characters */
@@ -2647,7 +2647,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 
 	/*
 	 * We have width = stat_width or term_columns() columns total.
-	 * We want a maximum of min(max_len, stat_name_width) for the name part.
+	 * We want a maximum of min(max_width, stat_name_width) for the name part.
 	 * We want a maximum of min(max_change, stat_graph_width) for the +- part.
 	 * We also need 1 for " " and 4 + decimal_width(max_change)
 	 * for " | NNNN " and one the empty column at the end, altogether
@@ -2702,8 +2702,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		graph_width = options->stat_graph_width;
 
 	name_width = (options->stat_name_width > 0 &&
-		      options->stat_name_width < max_len) ?
-		options->stat_name_width : max_len;
+		      options->stat_name_width < max_width) ?
+		options->stat_name_width : max_width;
 
 	/*
 	 * Adjust adjustable widths not to exceed maximum width
@@ -2735,6 +2735,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		char *name = file->print_name;
 		uintmax_t added = file->added;
 		uintmax_t deleted = file->deleted;
+		size_t num_padding_spaces = 0;
 		int name_len;
 
 		if (!file->is_interesting && (added + deleted == 0))
@@ -2744,7 +2745,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		 * "scale" the filename
 		 */
 		len = name_width;
-		name_len = strlen(name);
+		name_len = utf8_strwidth(name);
 		if (name_width < name_len) {
 			char *slash;
 			prefix = "...";
@@ -2754,10 +2755,14 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			if (slash)
 				name = slash;
 		}
+		if (len > utf8_strwidth(name))
+			num_padding_spaces = len - utf8_strwidth(name);
 
 		if (file->is_binary) {
-			strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-			strbuf_addf(&out, " %*s", number_width, "Bin");
+			strbuf_addf(&out, " %s%s ", prefix,  name);
+			if (num_padding_spaces)
+				strbuf_addchars(&out, ' ', num_padding_spaces);
+			strbuf_addf(&out, "| %*s", number_width, "Bin");
 			if (!added && !deleted) {
 				strbuf_addch(&out, '\n');
 				emit_diff_symbol(options, DIFF_SYMBOL_STATS_LINE,
@@ -2777,8 +2782,10 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		else if (file->is_unmerged) {
-			strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-			strbuf_addstr(&out, " Unmerged\n");
+			strbuf_addf(&out, " %s%s ", prefix,  name);
+			if (num_padding_spaces)
+				strbuf_addchars(&out, ' ', num_padding_spaces);
+			strbuf_addstr(&out, "| Unmerged\n");
 			emit_diff_symbol(options, DIFF_SYMBOL_STATS_LINE,
 					 out.buf, out.len, 0);
 			strbuf_reset(&out);
@@ -2804,8 +2811,10 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 				add = total - del;
 			}
 		}
-		strbuf_addf(&out, " %s%-*s |", prefix, len, name);
-		strbuf_addf(&out, " %*"PRIuMAX"%s",
+		strbuf_addf(&out, " %s%s ", prefix,  name);
+		if (num_padding_spaces)
+			strbuf_addchars(&out, ' ', num_padding_spaces);
+		strbuf_addf(&out, "| %*"PRIuMAX"%s",
 			number_width, added + deleted,
 			added + deleted ? " " : "");
 		show_graph(&out, '+', add, add_c, reset);

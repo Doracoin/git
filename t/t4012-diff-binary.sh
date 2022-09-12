@@ -113,20 +113,20 @@ test_expect_success 'diff --no-index with binary creation' '
 '
 
 cat >expect <<EOF
- binfile  |   Bin 0 -> 1026 bytes
- textfile | 10000 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ binfïlë  |   Bin 0 -> 1026 bytes
+ textfilë | 10000 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 
 test_expect_success 'diff --stat with binary files and big change count' '
-	printf "\01\00%1024d" 1 >binfile &&
-	git add binfile &&
+	printf "\01\00%1024d" 1 >binfïlë &&
+	git add binfïlë &&
 	i=0 &&
 	while test $i -lt 10000; do
 		echo $i &&
 		i=$(($i + 1)) || return 1
-	done >textfile &&
-	git add textfile &&
-	git diff --cached --stat binfile textfile >output &&
+	done >textfilë &&
+	git add textfilë &&
+	git -c core.quotepath=false diff --cached --stat binfïlë textfilë >output &&
 	grep " | " output >actual &&
 	test_cmp expect actual
 '
