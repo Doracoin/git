@@ -634,7 +634,8 @@ Writing Documentation:
 
  A few commented examples follow to provide reference when writing or
  modifying command usage strings and synopsis sections in the manual
- pages:
+ pages. The two should match, see t/t0450-txt-doc-vs-help.sh for
+ (partial) regression testing.
 
  Placeholders are spelled in lowercase and enclosed in angle brackets:
    <file>
@@ -650,8 +651,8 @@ Writing Documentation:
    (One or more of <file>.)
 
  Optional parts are enclosed in square brackets:
-   [<extra>]
-   (Zero or one <extra>.)
+   [<file>...]
+   (Zero or more of <file>.)
 
    --exec-path[=<path>]
    (Option with an optional argument.  Note that the "=" is inside the
@@ -664,6 +665,16 @@ Writing Documentation:
  Multiple alternatives are indicated with vertical bars:
    [-q | --quiet]
    [--utf8 | --no-utf8]
+
+ Use spacing around "|" token(s), but not on the inside of "[]()"
+ tokens:
+   Do: [-q | --quiet]
+   Don't: [-q|--quiet]
+
+ Don't use spacing around "|" tokens when they're used to seperate the
+ alternate arguments of an option:
+    Do: --track[=(direct|inherit)]
+    Don't: --track[=(direct | inherit)]
 
  Parentheses are used for grouping:
    [(<rev> | <range>)...]
